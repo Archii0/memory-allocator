@@ -1,15 +1,12 @@
-flags=-O2 -Wall -std=c2x
+flags=-fPIC -shared
 ldflags=
 
 .PHONY: all clean
 
-all: clean Memory-Allocator
+all: clean memalloc.so
 
-Memory-Allocator: Memory-Allocator.o
-	cc $(flags) $^ -o $@ $(ldflags)
-
-Memory-Allocator.o: Memory-Allocator.c Memory-Allocator.h
-	cc $(flags) -c $<
+memalloc.so: Memory-Allocator.c
+	cc $(flags) -o memalloc.so Memory-Allocator.c
 
 clean:
 	rm -f *.o Memory-Allocator

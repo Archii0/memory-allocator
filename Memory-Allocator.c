@@ -1,8 +1,9 @@
 /* Memory-Allocator.c*/
 
-#include "Memory-Allocator.h"
-
-// https://arjunsreedharan.org/post/148675821737/memory-allocators-101-write-a-simple-memory
+#include <pthread.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 typedef char ALIGN[16];
 
@@ -18,8 +19,16 @@ typedef union header header_t;
 header_t *head, *tail;
 pthread_mutex_t global_malloc_lock;
 
+header_t *get_free_block(size_t size) {
+    header_t *curr = head;
+    while (curr) {
+        if (curr->s.is_free && curr->s.size >= size)
+            return curr;
+        curr = curr->s.next;
+    }
+    return NULL;
+}
 void *malloc(size_t size) {
-
     size_t total_size;
     void *block;
     header_t *header;
@@ -56,24 +65,15 @@ void *malloc(size_t size) {
     return (void *)(header + 1);
 }
 
-header_t *get_free_block(size_t size) {
-    header_t *curr = head;
-    while (curr) {
-        if (curr->s.is_free && curr->s.size >= size)
-            return curr;
-        curr = curr->s.next;
-    }
-    return NULL;
-}
-
 void free(void *block) {
+    // printf("Free!!");
     header_t *header, *tmp;
     void *programbreak;
 
     if (!block)
         return;
     pthread_mutex_lock(&global_malloc_lock);
-    header - (header_t *)block - 1;
+    header = (header_t *)block - 1;
 
     programbreak = sbrk(0);
     if ((char *)block + header->s.size == programbreak) {
@@ -97,7 +97,42 @@ void free(void *block) {
     pthread_mutex_unlock(&global_malloc_lock);
 }
 
-int main(int argc, char *argv[]) {
-    printf("Nifty.");
-    return 0;
+void *calloc(size_t num, size_t nsize) {
+    // printf("Calloc!!");
+    size_t size;
+    void *block;
+    if (!num || !nsize)
+        return NULL;
+    size = num * nsize;
+    // Check mul overflow
+    if (nsize != size / num)
+        return NULL;
+    block = malloc(size);
+
+    if (!block)
+        return NULL;
+
+    memset(block, 0, size);
+    return block;
+}
+
+void *realloc(void *block, size_t size) {
+    // printf("Realloc!!");
+    header_t *header;
+    void *ret;
+
+    if (!block || !size)
+        return malloc(size);
+
+    header = (header_t *)block - 1;
+
+    if (header->s.size >= size)
+        return block;
+    ret = malloc(size);
+
+    if (ret) {
+        memcpy(ret, block, header->s.size);
+        free(block);
+    }
+    return ret;
 }
