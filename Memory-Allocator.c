@@ -66,7 +66,6 @@ void *malloc(size_t size) {
 }
 
 void free(void *block) {
-    // printf("Free!!");
     header_t *header, *tmp;
     void *programbreak;
 
@@ -98,7 +97,6 @@ void free(void *block) {
 }
 
 void *calloc(size_t num, size_t nsize) {
-    // printf("Calloc!!");
     size_t size;
     void *block;
     if (!num || !nsize)
@@ -117,7 +115,6 @@ void *calloc(size_t num, size_t nsize) {
 }
 
 void *realloc(void *block, size_t size) {
-    // printf("Realloc!!");
     header_t *header;
     void *ret;
 
